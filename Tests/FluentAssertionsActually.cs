@@ -53,7 +53,8 @@ public class Tests
 		Assert.That(
 			whatDennisDoomenSuggested,
 			Throws.TypeOf<InvalidOperationException>()
-				.With.Message.Contain("No members were found for comparison. Please specify some members to include in the comparison or choose a more meaningful assertion.")
+				.With.Message.Contain("No members were found for comparison.")
+				.With.Message.Contain("Please specify some members to include in the comparison or choose a more meaningful assertion.")
 		);
 	}
 
