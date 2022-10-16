@@ -208,7 +208,7 @@ public class Tests
 	{
 		// Arrange
 		var o1 = RootObjectTemplate;
-		var o2 = RootObjectTemplate with { Values = new[] { o1.Values[0], o1.Values[1] } };
+		var o2 = RootObjectTemplate with { Values = o1.Values.Select(_ => PositiveInteger.CreateFromInteger(_)) };
 
 		// Act & Assert
 		Assert.That(
@@ -240,7 +240,7 @@ public class Tests
 	{
 		// Arrange
 		var o1 = RootObjectTemplate;
-		var o2 = RootObjectTemplate with { Values = new[] { o1.Values[0], o1.Values[1] } };
+		var o2 = RootObjectTemplate with { Values = o1.Values.Select(_ => PositiveInteger.CreateFromInteger(_)) };
 
 		// Act & Assert
 		o2.Should().BeEquivalentTo(o1, options => options.ComparingByValue<PositiveInteger>());

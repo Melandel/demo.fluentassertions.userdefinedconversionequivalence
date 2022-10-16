@@ -2,7 +2,7 @@ namespace Tests;
 
 record RootObject(
 	SomeEncapsulatedId SomeEncapsulatedId,
-	PositiveInteger[] Values,
+	IEnumerable<PositiveInteger> Values,
 	Dictionary<SomeEnum, NegativeInteger[]> ExtraValuesByType,
 	SomeObjectContainingPositiveIntegerProperties ComplexObjectWithPositiveIntegers
 );
