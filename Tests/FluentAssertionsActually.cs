@@ -24,20 +24,16 @@ public class Tests
 	public void SetUp()
 	{
 		_output1 = OutputBase;
-		_output2 = OutputBase with { SomeEncapsulatedId = SomeEncapsulatedId.CreateUnique() };
+		_output2 = OutputBase with { SomeEncapsulatedId = SomeEncapsulatedId.CreateUnique() }; // Different SomeEncapsulatedId
 	}
 
 	[Test]
-	public void FaWithoutOptions_Should_FindEquivalence()
+	public void FailsToFindDifferencesBetweenOutputs_When_NoConfigurationIsGiven()
 	{
-		_output2.Should().BeEquivalentTo(_output1);
-	}
+		var whatIWishWasTrue = () => { _output2.Should().NotBeEquivalentTo(_output1); };
 
-	[Test]
-	public void FaWithOptions_ComparingByMember_Still_Fails_To_Find_Difference_Between_The_Two_EncapsulatedIds()
-	{
 		Assert.That(
-			() => {_output2.Should().NotBeEquivalentTo(_output1, options => options.ComparingByMembers<SomeEncapsulatedId>()); },
+			whatIWishWasTrue,
 			Throws.Exception
 				.With.Message.Contain("Expected _output2 not to be equivalent to Output")
 				.With.Message.Contain(", but they are.")
@@ -45,15 +41,39 @@ public class Tests
 	}
 
 	[Test]
-	public void FaWithOptions_ComparingByMember_Applied_On_Property_SomeEncapsulatedId_Only_Still_Fails_To_Find_Difference_Between_The_Two_EncapsulatedIds()
+	public void FailsToFindDifferencesBetweenEncapsulatedIDs_When_Comparing_SomeEncapsulatedId_ByMember()
 	{
+
 		var someEncapsulatedId1 = _output1.SomeEncapsulatedId;
 		var someEncapsulatedId2 = _output2.SomeEncapsulatedId;
 
+		var whatDennisDoomenSuggested = () => { // // https://github.com/fluentassertions/fluentassertions/issues/2016#issuecomment-1279928376
+			someEncapsulatedId2.Should().NotBeEquivalentTo(
+				someEncapsulatedId1,
+				options => options.ComparingByMembers<SomeEncapsulatedId>()
+			); };
+
 		Assert.That(
-			() => { someEncapsulatedId2.Should().NotBeEquivalentTo(someEncapsulatedId1, options => options.ComparingByMembers<SomeEncapsulatedId>()); },
+			whatDennisDoomenSuggested,
 			Throws.TypeOf<InvalidOperationException>()
 				.With.Message.Contain("No members were found for comparison. Please specify some members to include in the comparison or choose a more meaningful assertion.")
+		);
+	}
+
+	[Test]
+	public void FailsToFindDifferencesBetweenOutputs_When_Comparing_SomeEncapsulatedId_ByMember()
+	{
+		var whatIWishWasTrue = () => {
+			_output2.Should().NotBeEquivalentTo(
+				_output1,
+				options => options.ComparingByMembers<SomeEncapsulatedId>()
+			);
+		};
+		Assert.That(
+			whatIWishWasTrue,
+			Throws.Exception
+				.With.Message.Contain("Expected _output2 not to be equivalent to Output")
+				.With.Message.Contain(", but they are.")
 		);
 	}
 }
