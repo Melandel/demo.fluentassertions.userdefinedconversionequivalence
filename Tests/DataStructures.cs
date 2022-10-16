@@ -34,6 +34,7 @@ record SomeEncapsulatedId
 	readonly Guid _encapsulated;
 	SomeEncapsulatedId(Guid encapsulated) => _encapsulated = encapsulated;
 	public static SomeEncapsulatedId CreateUnique() => new(Guid.NewGuid());
+	public static SomeEncapsulatedId CreateFromGuid(Guid guid) => new(guid);
 	public static implicit operator Guid(SomeEncapsulatedId someEncapsulatedId) => someEncapsulatedId._encapsulated;
 }
 

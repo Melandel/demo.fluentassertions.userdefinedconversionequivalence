@@ -236,7 +236,7 @@ public class Tests
 	}
 
 	[Test]
-	public void FindsEquivalenceBetweenRootObjects_When_Comparing_PositiveIntegersInsideArray_ByValue_And_Collection_Property_Has_Same_Values_But_In_Different_Array()
+	public void FindsEquivalenceBetweenRootObjects_When_Comparing_PositiveIntegersInsideArray_ByValue_And_Collection_Property_Has_Same_Values_But_In_Different_Array_And_Different_Instances()
 	{
 		// Arrange
 		var o1 = RootObjectTemplate;
@@ -247,13 +247,36 @@ public class Tests
 	}
 
 	[Test]
-	public void FindsEquivalenceBetweenRootObjects_When_Comparing_PositiveIntegersInsideArray_ByValue_And_Collection_Property_Has_Same_Values_But_In_Different_Array_And_Different_Instances()
+	public void FailsToFindEquivalenceBetweenRootObjects_When_ComparingRecordsByValue_Then_ComparingPositiveIntegersInsideArray_ByValue()
 	{
 		// Arrange
 		var o1 = RootObjectTemplate;
-		var o2 = RootObjectTemplate with { Values = new[] { PositiveInteger.CreateFromInteger(1), PositiveInteger.CreateFromInteger(2) } };
+		var o2 = RootObjectTemplate with {
+			Values = o1.Values.Select(_ => PositiveInteger.CreateFromInteger(_))
+		};
 
 		// Act & Assert
-		o2.Should().BeEquivalentTo(o1, options => options.ComparingByValue<PositiveInteger>());
+		Assert.That(
+			() => { o2.Should().BeEquivalentTo(o1, options => options.ComparingRecordsByValue().ComparingByValue<PositiveInteger>()); },
+			Throws.Exception
+				.With.Message.Contain("Expected o2 to be RootObject")
+				.With.Message.Contain("but found RootObject")
+		);
+	}
+
+	[Test]
+	public void FindsEquivalenceBetweenRootObjects_When_ComparingSomeEncapsulatedId_ByValue_Then_ComparingPositiveIntegersInsideArray_ByValue()
+	{
+		// Arrange
+		var o1 = RootObjectTemplate;
+		var o2 = RootObjectTemplate with {
+			SomeEncapsulatedId = SomeEncapsulatedId.CreateFromGuid(o1.SomeEncapsulatedId),
+			Values = o1.Values.Select(_ => PositiveInteger.CreateFromInteger(_))
+		};
+
+		// Act & Assert
+		o2.Should().BeEquivalentTo(o1, options => options
+			.ComparingByValue<SomeEncapsulatedId>()
+			.ComparingByValue<PositiveInteger>());
 	}
 }
