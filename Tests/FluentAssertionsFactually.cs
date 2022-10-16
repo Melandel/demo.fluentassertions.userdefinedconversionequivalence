@@ -339,4 +339,306 @@ public class Tests
 			.ComparingByValue<PositiveInteger>()
 			.ComparingByValue<NegativeInteger>());
 	}
+
+	[Test]
+	public void FailsToFindDifferenceBetweenRootObjects_When_ComplexObject_Has_Different_Values()
+	{
+		// Arrange
+		var o1 = RootObjectTemplate;
+		var o2 = RootObjectTemplate with {
+			ComplexObjectWithPositiveIntegers = new SomeObjectContainingPositiveIntegerProperties(
+				PositiveInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.PositiveInteger+1),
+				NegativeInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.NegativeInteger-1)
+			)
+		};
+
+		// Act & Assert
+		Assert.That(
+			() => { o2.Should().NotBeEquivalentTo(o1); },
+			Throws.Exception
+				.With.Message.Contain("Expected o2 not to be equivalent to RootObject")
+				.With.Message.Contain(", but they are.")
+		);
+	}
+
+	[Test]
+	public void FindsDifferenceBetweenRootObjects_When_ComparingPositiveIntegerByValue_And_ComplexObject_Has_Different_Values()
+	{
+		// Arrange
+		var o1 = RootObjectTemplate;
+		var o2 = RootObjectTemplate with {
+			ComplexObjectWithPositiveIntegers = new SomeObjectContainingPositiveIntegerProperties(
+				PositiveInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.PositiveInteger+1),
+				NegativeInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.NegativeInteger-1)
+			)
+		};
+
+		// Act & Assert
+		o2.Should().NotBeEquivalentTo(o1, options => options
+			.ComparingByValue<PositiveInteger>());
+	}
+
+	[Test]
+	public void FindsDifferenceBetweenRootObjects_When_ComparingNegativeIntegerByValue_And_ComplexObject_Has_Different_Values()
+	{
+		// Arrange
+		var o1 = RootObjectTemplate;
+		var o2 = RootObjectTemplate with {
+			ComplexObjectWithPositiveIntegers = new SomeObjectContainingPositiveIntegerProperties(
+				PositiveInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.PositiveInteger+1),
+				NegativeInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.NegativeInteger-1)
+			)
+		};
+
+		// Act & Assert
+		o2.Should().NotBeEquivalentTo(o1, options => options
+			.ComparingByValue<NegativeInteger>());
+	}
+
+	[Test]
+	public void FindsDifferenceBetweenRootObjects_When_ComparingBothPositiveAndNegativeIntegerByValue_And_ComplexObject_Has_Different_Positive_Value()
+	{
+		// Arrange
+		var o1 = RootObjectTemplate;
+		var o2 = RootObjectTemplate with {
+			ComplexObjectWithPositiveIntegers = new SomeObjectContainingPositiveIntegerProperties(
+				PositiveInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.PositiveInteger+1),
+				NegativeInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.NegativeInteger)
+			)
+		};
+
+		// Act & Assert
+		o2.Should().NotBeEquivalentTo(o1, options => options
+			.ComparingByValue<PositiveInteger>()
+			.ComparingByValue<NegativeInteger>());
+	}
+
+	[Test]
+	public void FindsDifferenceBetweenRootObjects_When_ComparingBothPositiveAndNegativeIntegerByValue_And_ComplexObject_Has_Different_Negative_Value()
+	{
+		// Arrange
+		var o1 = RootObjectTemplate;
+		var o2 = RootObjectTemplate with {
+			ComplexObjectWithPositiveIntegers = new SomeObjectContainingPositiveIntegerProperties(
+				PositiveInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.PositiveInteger),
+				NegativeInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.NegativeInteger-1)
+			)
+		};
+
+		// Act & Assert
+		o2.Should().NotBeEquivalentTo(o1, options => options
+			.ComparingByValue<PositiveInteger>()
+			.ComparingByValue<NegativeInteger>());
+	}
+
+	[Test]
+	public void FindsDifferenceBetweenRootObjects_When_ComparingBothPositiveAndNegativeIntegerByValue_And_ComplexObject_Has_Different_Values()
+	{
+		// Arrange
+		var o1 = RootObjectTemplate;
+		var o2 = RootObjectTemplate with {
+			ComplexObjectWithPositiveIntegers = new SomeObjectContainingPositiveIntegerProperties(
+				PositiveInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.PositiveInteger),
+				NegativeInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.NegativeInteger)
+			)
+		};
+
+		// Act & Assert
+		o2.Should().BeEquivalentTo(o1, options => options
+			.ComparingByValue<PositiveInteger>()
+			.ComparingByValue<NegativeInteger>());
+	}
+
+	[Test]
+	public void FindsDifferenceBetweenRootObjects_When_ComparingWithAllRecordsTypesManuallyByValue_And_SomeEcapsulatedId_Is_Different()
+	{
+		// Arrange
+		var o1 = RootObjectTemplate;
+		var o2 = RootObjectTemplate with {
+			SomeEncapsulatedId = SomeEncapsulatedId.CreateUnique(),
+			Values = o1.Values.Select(_ => PositiveInteger.CreateFromInteger(_)),
+			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => _.Value.Select(ni => NegativeInteger.CreateFromInteger(ni))),
+			ComplexObjectWithPositiveIntegers = new SomeObjectContainingPositiveIntegerProperties(
+				PositiveInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.PositiveInteger),
+				NegativeInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.NegativeInteger)
+			)
+		};
+		var configThatWorksButIsNotScalable = (EquivalencyAssertionOptions<RootObject> options) => options
+			.ComparingByValue<SomeEncapsulatedId>()
+			.ComparingByValue<PositiveInteger>()
+			.ComparingByValue<NegativeInteger>();
+
+		// Act & Assert
+		o2.Should().NotBeEquivalentTo(o1, configThatWorksButIsNotScalable);
+	}
+
+	[Test]
+	public void FindsDifferenceBetweenRootObjects_When_ComparingWithAllRecordsTypesManuallyByValue_And_PositiveIntegersInsideArray_Are_Different()
+	{
+		// Arrange
+		var o1 = RootObjectTemplate;
+		var o2 = RootObjectTemplate with {
+			SomeEncapsulatedId = SomeEncapsulatedId.CreateFromGuid(o1.SomeEncapsulatedId),
+			Values = o1.Values.Select(_ => PositiveInteger.CreateFromInteger(_+1000)),
+			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => _.Value.Select(ni => NegativeInteger.CreateFromInteger(ni))),
+			ComplexObjectWithPositiveIntegers = new SomeObjectContainingPositiveIntegerProperties(
+				PositiveInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.PositiveInteger),
+				NegativeInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.NegativeInteger)
+			)
+		};
+		var configThatWorksButIsNotScalable = (EquivalencyAssertionOptions<RootObject> options) => options
+			.ComparingByValue<SomeEncapsulatedId>()
+			.ComparingByValue<PositiveInteger>()
+			.ComparingByValue<NegativeInteger>();
+
+		// Act & Assert
+		o2.Should().NotBeEquivalentTo(o1, configThatWorksButIsNotScalable);
+	}
+
+	[Test]
+	public void FindsDifferenceBetweenRootObjects_When_ComparingWithAllRecordsTypesManuallyByValue_And_NegativeIntegersInsideDictionary_Are_Different()
+	{
+		// Arrange
+		var o1 = RootObjectTemplate;
+		var o2 = RootObjectTemplate with {
+			SomeEncapsulatedId = SomeEncapsulatedId.CreateFromGuid(o1.SomeEncapsulatedId),
+			Values = o1.Values.Select(_ => PositiveInteger.CreateFromInteger(_)),
+			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => _.Value.Select(ni => NegativeInteger.CreateFromInteger(ni-1000))),
+			ComplexObjectWithPositiveIntegers = new SomeObjectContainingPositiveIntegerProperties(
+				PositiveInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.PositiveInteger),
+				NegativeInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.NegativeInteger)
+			)
+		};
+		var configThatWorksButIsNotScalable = (EquivalencyAssertionOptions<RootObject> options) => options
+			.ComparingByValue<SomeEncapsulatedId>()
+			.ComparingByValue<PositiveInteger>()
+			.ComparingByValue<NegativeInteger>();
+
+		// Act & Assert
+		o2.Should().NotBeEquivalentTo(o1, configThatWorksButIsNotScalable);
+	}
+
+	[Test]
+	public void FindsDifferenceBetweenRootObjects_When_ComparingWithAllRecordsTypesManuallyByValue_And_PositiveIntegerInComplexObject_Is_Different()
+	{
+		// Arrange
+		var o1 = RootObjectTemplate;
+		var o2 = RootObjectTemplate with {
+			SomeEncapsulatedId = SomeEncapsulatedId.CreateFromGuid(o1.SomeEncapsulatedId),
+			Values = o1.Values.Select(_ => PositiveInteger.CreateFromInteger(_)),
+			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => _.Value.Select(ni => NegativeInteger.CreateFromInteger(ni))),
+			ComplexObjectWithPositiveIntegers = new SomeObjectContainingPositiveIntegerProperties(
+				PositiveInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.PositiveInteger+1000),
+				NegativeInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.NegativeInteger)
+			)
+		};
+		var configThatWorksButIsNotScalable = (EquivalencyAssertionOptions<RootObject> options) => options
+			.ComparingByValue<SomeEncapsulatedId>()
+			.ComparingByValue<PositiveInteger>()
+			.ComparingByValue<NegativeInteger>();
+
+		// Act & Assert
+		o2.Should().NotBeEquivalentTo(o1, configThatWorksButIsNotScalable);
+	}
+
+	[Test]
+	public void FindsDifferenceBetweenRootObjects_When_ComparingWithAllRecordsTypesManuallyByValue_And_NegativeIntegerInComplexObject_Is_Different()
+	{
+		// Arrange
+		var o1 = RootObjectTemplate;
+		var o2 = RootObjectTemplate with {
+			SomeEncapsulatedId = SomeEncapsulatedId.CreateFromGuid(o1.SomeEncapsulatedId),
+			Values = o1.Values.Select(_ => PositiveInteger.CreateFromInteger(_)),
+			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => _.Value.Select(ni => NegativeInteger.CreateFromInteger(ni))),
+			ComplexObjectWithPositiveIntegers = new SomeObjectContainingPositiveIntegerProperties(
+				PositiveInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.PositiveInteger),
+				NegativeInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.NegativeInteger-1000)
+			)
+		};
+		var configThatWorksButIsNotScalable = (EquivalencyAssertionOptions<RootObject> options) => options
+			.ComparingByValue<SomeEncapsulatedId>()
+			.ComparingByValue<PositiveInteger>()
+			.ComparingByValue<NegativeInteger>();
+
+		// Act & Assert
+		o2.Should().NotBeEquivalentTo(o1, configThatWorksButIsNotScalable);
+	}
+
+	[Test]
+	public void FindEquivalenceBetweenRootObjects_When_ComparingWithAllRecordsTypesManuallyByValue_And_Values_Are_The_Same_But_From_Different_Instances()
+	{
+		// Arrange
+		var o1 = RootObjectTemplate;
+		var o2 = RootObjectTemplate with {
+			SomeEncapsulatedId = SomeEncapsulatedId.CreateFromGuid(o1.SomeEncapsulatedId),
+			Values = o1.Values.Select(_ => PositiveInteger.CreateFromInteger(_)),
+			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => _.Value.Select(ni => NegativeInteger.CreateFromInteger(ni))),
+			ComplexObjectWithPositiveIntegers = new SomeObjectContainingPositiveIntegerProperties(
+				PositiveInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.PositiveInteger),
+				NegativeInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.NegativeInteger)
+			)
+		};
+		var configThatWorksButIsNotScalable = (EquivalencyAssertionOptions<RootObject> options) => options
+			.ComparingByValue<SomeEncapsulatedId>()
+			.ComparingByValue<PositiveInteger>()
+			.ComparingByValue<NegativeInteger>();
+
+		// Act & Assert
+		o2.Should().BeEquivalentTo(o1, configThatWorksButIsNotScalable);
+	}
+
+	[Test]
+	public void FindEquivalenceBetweenRootObjects_When_ComparingRecordsByValue_And_Values_Are_The_Same_But_In_Different_Instance_And_Collections_Reference_The_Same_Thing()
+	{
+		// Arrange
+		var o1 = RootObjectTemplate;
+		var o2 = RootObjectTemplate with {
+			SomeEncapsulatedId = SomeEncapsulatedId.CreateFromGuid(o1.SomeEncapsulatedId),
+			ComplexObjectWithPositiveIntegers = new SomeObjectContainingPositiveIntegerProperties(
+				PositiveInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.PositiveInteger),
+				NegativeInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.NegativeInteger)
+			)
+		};
+		var configThatIsScalableButDoesNotWorkWhenThereAreCollectionsInvolved = (EquivalencyAssertionOptions<RootObject> options) => options.ComparingRecordsByValue();
+
+		// Act & Assert
+		o2.Should().BeEquivalentTo(o1, configThatIsScalableButDoesNotWorkWhenThereAreCollectionsInvolved);
+	}
+
+	[Test]
+	public void FailstoFindEquivalenceBetweenRootObjects_When_ComparingRecordsByValue_And_Array_Does_Not_Reference_The_Same_Thing_Despite_Having_Same_Values_Inside()
+	{
+		// Arrange
+		var o1 = RootObjectTemplate;
+		var o2 = RootObjectTemplate with {
+			Values = o1.Values.Select(_ => PositiveInteger.CreateFromInteger(_)),
+		};
+		var configThatIsScalableButDoesNotWorkWhenThereAreCollectionsInvolved = (EquivalencyAssertionOptions<RootObject> options) => options.ComparingRecordsByValue();
+
+		// Act & Assert
+		Assert.That(
+			() => { o2.Should().BeEquivalentTo(o1, configThatIsScalableButDoesNotWorkWhenThereAreCollectionsInvolved); },
+			Throws.Exception
+				.With.Message.Contain("Expected o2 to be RootObject")
+				.With.Message.Contain("but found RootObject")
+			);
+	}
+
+	public void FailstoFindEquivalenceBetweenRootObjects_When_ComparingRecordsByValue_And_Dictionary_Does_Not_Reference_The_Same_Thing_Despite_Having_Same_Values_Inside()
+	{
+		// Arrange
+		var o1 = RootObjectTemplate;
+		var o2 = RootObjectTemplate with {
+			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => _.Value.Select(ni => NegativeInteger.CreateFromInteger(ni))),
+		};
+		var configThatIsScalableButDoesNotWorkWhenThereAreCollectionsInvolved = (EquivalencyAssertionOptions<RootObject> options) => options.ComparingRecordsByValue();
+
+		// Act & Assert
+		Assert.That(
+			() => { o2.Should().BeEquivalentTo(o1, configThatIsScalableButDoesNotWorkWhenThereAreCollectionsInvolved); },
+			Throws.Exception
+				.With.Message.Contain("Expected o2 to be RootObject")
+				.With.Message.Contain("but found RootObject")
+			);
+	}
 }
