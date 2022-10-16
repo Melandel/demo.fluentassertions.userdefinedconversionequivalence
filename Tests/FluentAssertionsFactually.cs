@@ -33,7 +33,7 @@ public class Tests
 			Throws.Exception
 				.With.Message.Contain("Expected o2 not to be equivalent to RootObject")
 				.With.Message.Contain(", but they are.")
-			);
+		);
 	}
 
 	[Test]
@@ -49,7 +49,7 @@ public class Tests
 			id2.Should().NotBeEquivalentTo(
 					id1,
 					options => options.ComparingByMembers<SomeEncapsulatedId>()
-				);
+			);
 		};
 
 		// Act & Assert
@@ -58,7 +58,7 @@ public class Tests
 			Throws.TypeOf<InvalidOperationException>()
 				.With.Message.Contain("No members were found for comparison.")
 				.With.Message.Contain("Please specify some members to include in the comparison or choose a more meaningful assertion.")
-			);
+		);
 	}
 
 	[Test]
@@ -72,7 +72,7 @@ public class Tests
 			o2.Should().NotBeEquivalentTo(
 				o1,
 				options => options.ComparingByMembers<SomeEncapsulatedId>()
-			);
+		);
 		};
 
 		// Act & Assert
@@ -81,7 +81,7 @@ public class Tests
 			Throws.Exception
 				.With.Message.Contain("Expected o2 not to be equivalent to RootObject")
 				.With.Message.Contain(", but they are.")
-			);
+		);
 	}
 
 	[Test]
@@ -621,7 +621,7 @@ public class Tests
 			Throws.Exception
 				.With.Message.Contain("Expected o2 to be RootObject")
 				.With.Message.Contain("but found RootObject")
-			);
+		);
 	}
 
 	public void FailstoFindEquivalenceBetweenRootObjects_When_ComparingRecordsByValue_And_Dictionary_Does_Not_Reference_The_Same_Thing_Despite_Having_Same_Values_Inside()
@@ -639,6 +639,6 @@ public class Tests
 			Throws.Exception
 				.With.Message.Contain("Expected o2 to be RootObject")
 				.With.Message.Contain("but found RootObject")
-			);
+		);
 	}
 }
