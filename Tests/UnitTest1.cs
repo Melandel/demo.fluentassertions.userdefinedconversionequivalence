@@ -35,7 +35,7 @@ record SomeEncapsulatedId
 {
 	readonly Guid _encapsulated;
 	SomeEncapsulatedId(Guid encapsulated) => _encapsulated = encapsulated;
-	public static SomeEncapsulatedId Create() => new(Guid.NewGuid());
+	public static SomeEncapsulatedId CreateUnique() => new(Guid.NewGuid());
 	public static implicit operator Guid(SomeEncapsulatedId someEncapsulatedId) => someEncapsulatedId._encapsulated;
 }
 
@@ -50,7 +50,7 @@ public class Tests
 	Output _output1;
 	Output _output2;
 	readonly Output OutputBase = new Output(
-		SomeEncapsulatedId.Create(),
+		SomeEncapsulatedId.CreateUnique(),
 		new[] { PositiveInteger.CreateFromInteger(1), PositiveInteger.CreateFromInteger(2) },
 		new Dictionary<SomeEnum, NegativeInteger[]>
 		{
@@ -67,7 +67,7 @@ public class Tests
 	public void SetUp()
 	{
 		_output1 = OutputBase;
-		_output2 = OutputBase with { SomeEncapsulatedId = SomeEncapsulatedId.Create() };
+		_output2 = OutputBase with { SomeEncapsulatedId = SomeEncapsulatedId.CreateUnique() };
 	}
 
 	[Test]
@@ -76,19 +76,27 @@ public class Tests
 		_output2.Should().BeEquivalentTo(_output1);
 	}
 
-	// Fails
 	[Test]
-	public void FaWithOptions_ComparingByMember_Should_FindDifference_From_DifferentGuid()
+	public void FaWithOptions_ComparingByMember_Still_Fails_To_Find_Difference_Between_The_Two_EncapsulatedIds()
 	{
-		_output2.Should().NotBeEquivalentTo(_output1, options => options.ComparingByMembers<SomeEncapsulatedId>());
+		Assert.That(
+			() => {_output2.Should().NotBeEquivalentTo(_output1, options => options.ComparingByMembers<SomeEncapsulatedId>()); },
+			Throws.Exception
+				.With.Message.Contain("Expected _output2 not to be equivalent to Output")
+				.With.Message.Contain(", but they are.")
+		);
 	}
 
-	// Fails
 	[Test]
-	public void FaWithOptions_ComparingByMember_Should_FindDifference_When_Applied_On_SomeEncapsulatedId_Only()
+	public void FaWithOptions_ComparingByMember_Applied_On_Property_SomeEncapsulatedId_Only_Still_Fails_To_Find_Difference_Between_The_Two_EncapsulatedIds()
 	{
 		var someEncapsulatedId1 = _output1.SomeEncapsulatedId;
 		var someEncapsulatedId2 = _output2.SomeEncapsulatedId;
-		someEncapsulatedId2.Should().NotBeEquivalentTo(someEncapsulatedId1, options => options.ComparingByMembers<SomeEncapsulatedId>());
+
+		Assert.That(
+			() => { someEncapsulatedId2.Should().NotBeEquivalentTo(someEncapsulatedId1, options => options.ComparingByMembers<SomeEncapsulatedId>()); },
+			Throws.TypeOf<InvalidOperationException>()
+				.With.Message.Contain("No members were found for comparison. Please specify some members to include in the comparison or choose a more meaningful assertion.")
+		);
 	}
 }
