@@ -46,9 +46,9 @@ public class Tests
 		var whatDennisDoomenSuggested = () =>
 		{ // https://github.com/fluentassertions/fluentassertions/issues/2016#issuecomment-1279928376
 			id2.Should().NotBeEquivalentTo(
-						id1,
-						options => options.ComparingByMembers<SomeEncapsulatedId>()
-					);
+					id1,
+					options => options.ComparingByMembers<SomeEncapsulatedId>()
+				);
 		};
 
 		// Act & Assert
@@ -91,6 +91,8 @@ public class Tests
 		var o2 = RootObjectTemplate;
 		var id1 = o1.SomeEncapsulatedId;
 		var id2 = o2.SomeEncapsulatedId;
+
+		// Act & Assert
 		id2.Should().BeEquivalentTo(
 			id1,
 			options => options.ComparingByValue<SomeEncapsulatedId>()
