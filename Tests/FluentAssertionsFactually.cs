@@ -7,17 +7,17 @@ public class Tests
 {
 	static readonly RootObject RootObjectTemplate = new RootObject(
 		SomeEncapsulatedId.CreateUnique(),
-		new[] { PositiveInteger.CreateFromInteger(1), PositiveInteger.CreateFromInteger(2) },
-		new Dictionary<SomeEnum, IEnumerable<NegativeInteger>>
+		Values<PositiveInteger>.Gather(PositiveInteger.CreateFromInteger(1), PositiveInteger.CreateFromInteger(2)),
+		new Dictionary<SomeEnum, Values<NegativeInteger>>
 		{
-			{ SomeEnum.Value,        new[] { NegativeInteger.CreateFromInteger(-1), NegativeInteger.CreateFromInteger(-2) } },
-			{ SomeEnum.AnotherValue, new[] { NegativeInteger.CreateFromInteger(-3), NegativeInteger.CreateFromInteger(-4) } },
-			},
-			new SomeObjectContainingPositiveIntegerProperties(
-				PositiveInteger.CreateFromInteger(3),
-				NegativeInteger.CreateFromInteger(-5)
-			)
-		);
+			{ SomeEnum.Value,        Values<NegativeInteger>.Gather(NegativeInteger.CreateFromInteger(-1), NegativeInteger.CreateFromInteger(-2)) },
+			{ SomeEnum.AnotherValue, Values<NegativeInteger>.Gather(NegativeInteger.CreateFromInteger(-3), NegativeInteger.CreateFromInteger(-4)) },
+		},
+		new SomeObjectContainingPositiveIntegerProperties(
+			PositiveInteger.CreateFromInteger(3),
+			NegativeInteger.CreateFromInteger(-5)
+		)
+	);
 
 	[Test]
 	public void FailsToFindDifferencesBetweenOutputs_When_NoConfigurationIsGiven()
@@ -209,15 +209,17 @@ public class Tests
 	{
 		// Arrange
 		var o1 = RootObjectTemplate;
-		var o2 = RootObjectTemplate with { Values = o1.Values.Select(_ => PositiveInteger.CreateFromInteger(_)) };
+		var o2 = RootObjectTemplate with { Values = Values<PositiveInteger>.SelectFrom(o1.Values, _ => PositiveInteger.CreateFromInteger(_)) };
+		var configThatIsScalableAndWorksWithRecordCollections = (EquivalencyAssertionOptions<RootObject> options) => options.ComparingRecordsByValue();
 
 		// Act & Assert
-		Assert.That(
-			() => { o2.Should().BeEquivalentTo(o1, options => options.ComparingRecordsByValue()); },
-			Throws.Exception
-				.With.Message.Contains("Expected o2 to be RootObject")
-				.With.Message.Contains("but found RootObject")
-		);
+		o2.Should().BeEquivalentTo(o1, configThatIsScalableAndWorksWithRecordCollections);
+		//Assert.That(
+		//	() => { o2.Should().BeEquivalentTo(o1, options => options.ComparingRecordsByValue()); },
+		//	Throws.Exception
+		//		.With.Message.Contains("Expected o2 to be RootObject")
+		//		.With.Message.Contains("but found RootObject")
+		//);
 	}
 
 	[Test]
@@ -225,15 +227,17 @@ public class Tests
 	{
 		// Arrange
 		var o1 = RootObjectTemplate;
-		var o2 = RootObjectTemplate with { Values = new[] { PositiveInteger.CreateFromInteger(1), PositiveInteger.CreateFromInteger(2) } };
+		var o2 = RootObjectTemplate with { Values = Values<PositiveInteger>.Gather(PositiveInteger.CreateFromInteger(1), PositiveInteger.CreateFromInteger(2)) };
+		var configThatIsScalableAndWorksWithRecordCollections = (EquivalencyAssertionOptions<RootObject> options) => options.ComparingRecordsByValue();
 
 		// Act & Assert
-		Assert.That(
-			() => { o2.Should().BeEquivalentTo(o1, options => options.ComparingRecordsByValue()); },
-			Throws.Exception
-				.With.Message.Contains("Expected o2 to be RootObject")
-				.With.Message.Contains("but found RootObject")
-		);
+		o2.Should().BeEquivalentTo(o1, configThatIsScalableAndWorksWithRecordCollections);
+		//Assert.That(
+		//	() => { o2.Should().BeEquivalentTo(o1, options => options.ComparingRecordsByValue()); },
+		//	Throws.Exception
+		//		.With.Message.Contains("Expected o2 to be RootObject")
+		//		.With.Message.Contains("but found RootObject")
+		//);
 	}
 
 	[Test]
@@ -241,19 +245,20 @@ public class Tests
 	{
 		// Arrange
 		var o1 = RootObjectTemplate;
-		var o2 = RootObjectTemplate with { Values = o1.Values.Select(_ => PositiveInteger.CreateFromInteger(_)) };
+		var o2 = RootObjectTemplate with { Values = Values<PositiveInteger>.SelectFrom(o1.Values, _ => PositiveInteger.CreateFromInteger(_)) };
 
 		// Act & Assert
 		o2.Should().BeEquivalentTo(o1, options => options.ComparingByValue<PositiveInteger>());
 	}
 
+	[Ignore("No more need to override the drawbacks from ComparingRecordsByValue() : no more drawback")]
 	[Test]
 	public void FailsToFindEquivalenceBetweenRootObjects_When_ComparingRecordsByValue_Then_ComparingPositiveIntegersInsideArray_ByValue()
 	{
 		// Arrange
 		var o1 = RootObjectTemplate;
 		var o2 = RootObjectTemplate with {
-			Values = o1.Values.Select(_ => PositiveInteger.CreateFromInteger(_))
+			Values = Values<PositiveInteger>.SelectFrom(o1.Values, _ => PositiveInteger.CreateFromInteger(_))
 		};
 
 		// Act & Assert
@@ -272,7 +277,7 @@ public class Tests
 		var o1 = RootObjectTemplate;
 		var o2 = RootObjectTemplate with {
 			SomeEncapsulatedId = SomeEncapsulatedId.CreateFromGuid(o1.SomeEncapsulatedId),
-			Values = o1.Values.Select(_ => PositiveInteger.CreateFromInteger(_))
+			Values = Values<PositiveInteger>.SelectFrom(o1.Values, _ => PositiveInteger.CreateFromInteger(_))
 		};
 
 		// Act & Assert
@@ -288,8 +293,8 @@ public class Tests
 		var o1 = RootObjectTemplate;
 		var o2 = RootObjectTemplate with {
 			SomeEncapsulatedId = SomeEncapsulatedId.CreateFromGuid(o1.SomeEncapsulatedId),
-			Values = o1.Values.Select(_ => PositiveInteger.CreateFromInteger(_)),
-			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => _.Value.Select(ni => NegativeInteger.CreateFromInteger(ni+1)))
+			Values = Values<PositiveInteger>.SelectFrom(o1.Values, _ => PositiveInteger.CreateFromInteger(_)),
+			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => Values<NegativeInteger>.SelectFrom(_.Value, ni => NegativeInteger.CreateFromInteger(ni+1)))
 		};
 		var config = (EquivalencyAssertionOptions<RootObject> options) => options
 			.ComparingByValue<SomeEncapsulatedId>()
@@ -311,8 +316,8 @@ public class Tests
 		var o1 = RootObjectTemplate;
 		var o2 = RootObjectTemplate with {
 			SomeEncapsulatedId = SomeEncapsulatedId.CreateFromGuid(o1.SomeEncapsulatedId),
-			Values = o1.Values.Select(_ => PositiveInteger.CreateFromInteger(_)),
-			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => _.Value.Select(ni => NegativeInteger.CreateFromInteger(ni+1)))
+			Values = Values<PositiveInteger>.SelectFrom(o1.Values, _ => PositiveInteger.CreateFromInteger(_)),
+			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => Values<NegativeInteger>.SelectFrom(_.Value, ni => NegativeInteger.CreateFromInteger(ni+1)))
 		};
 
 		// Act & Assert
@@ -329,8 +334,8 @@ public class Tests
 		var o1 = RootObjectTemplate;
 		var o2 = RootObjectTemplate with {
 			SomeEncapsulatedId = SomeEncapsulatedId.CreateFromGuid(o1.SomeEncapsulatedId),
-			Values = o1.Values.Select(_ => PositiveInteger.CreateFromInteger(_)),
-			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => _.Value.Select(ni => NegativeInteger.CreateFromInteger(ni)))
+			Values = Values<PositiveInteger>.SelectFrom(o1.Values, _ => PositiveInteger.CreateFromInteger(_)),
+			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => Values<NegativeInteger>.SelectFrom(_.Value, ni => NegativeInteger.CreateFromInteger(ni)))
 		};
 
 		// Act & Assert
@@ -456,8 +461,8 @@ public class Tests
 		var o1 = RootObjectTemplate;
 		var o2 = RootObjectTemplate with {
 			SomeEncapsulatedId = SomeEncapsulatedId.CreateUnique(),
-			Values = o1.Values.Select(_ => PositiveInteger.CreateFromInteger(_)),
-			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => _.Value.Select(ni => NegativeInteger.CreateFromInteger(ni))),
+			Values = Values<PositiveInteger>.SelectFrom(o1.Values, _ => PositiveInteger.CreateFromInteger(_)),
+			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => Values<NegativeInteger>.SelectFrom(_.Value, ni => NegativeInteger.CreateFromInteger(ni))),
 			ComplexObjectWithPositiveIntegers = new SomeObjectContainingPositiveIntegerProperties(
 				PositiveInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.PositiveInteger),
 				NegativeInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.NegativeInteger)
@@ -479,8 +484,8 @@ public class Tests
 		var o1 = RootObjectTemplate;
 		var o2 = RootObjectTemplate with {
 			SomeEncapsulatedId = SomeEncapsulatedId.CreateFromGuid(o1.SomeEncapsulatedId),
-			Values = o1.Values.Select(_ => PositiveInteger.CreateFromInteger(_+1000)),
-			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => _.Value.Select(ni => NegativeInteger.CreateFromInteger(ni))),
+			Values = Values<PositiveInteger>.SelectFrom(o1.Values, _ => PositiveInteger.CreateFromInteger(_+1000)),
+			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => Values<NegativeInteger>.SelectFrom(_.Value, ni => NegativeInteger.CreateFromInteger(ni))),
 			ComplexObjectWithPositiveIntegers = new SomeObjectContainingPositiveIntegerProperties(
 				PositiveInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.PositiveInteger),
 				NegativeInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.NegativeInteger)
@@ -502,8 +507,8 @@ public class Tests
 		var o1 = RootObjectTemplate;
 		var o2 = RootObjectTemplate with {
 			SomeEncapsulatedId = SomeEncapsulatedId.CreateFromGuid(o1.SomeEncapsulatedId),
-			Values = o1.Values.Select(_ => PositiveInteger.CreateFromInteger(_)),
-			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => _.Value.Select(ni => NegativeInteger.CreateFromInteger(ni-1000))),
+			Values = Values<PositiveInteger>.SelectFrom(o1.Values, _ => PositiveInteger.CreateFromInteger(_)),
+			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => Values<NegativeInteger>.SelectFrom(_.Value, ni => NegativeInteger.CreateFromInteger(ni-1000))),
 			ComplexObjectWithPositiveIntegers = new SomeObjectContainingPositiveIntegerProperties(
 				PositiveInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.PositiveInteger),
 				NegativeInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.NegativeInteger)
@@ -525,8 +530,8 @@ public class Tests
 		var o1 = RootObjectTemplate;
 		var o2 = RootObjectTemplate with {
 			SomeEncapsulatedId = SomeEncapsulatedId.CreateFromGuid(o1.SomeEncapsulatedId),
-			Values = o1.Values.Select(_ => PositiveInteger.CreateFromInteger(_)),
-			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => _.Value.Select(ni => NegativeInteger.CreateFromInteger(ni))),
+			Values = Values<PositiveInteger>.SelectFrom(o1.Values, _ => PositiveInteger.CreateFromInteger(_)),
+			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => Values<NegativeInteger>.SelectFrom(_.Value, ni => NegativeInteger.CreateFromInteger(ni))),
 			ComplexObjectWithPositiveIntegers = new SomeObjectContainingPositiveIntegerProperties(
 				PositiveInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.PositiveInteger+1000),
 				NegativeInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.NegativeInteger)
@@ -548,8 +553,8 @@ public class Tests
 		var o1 = RootObjectTemplate;
 		var o2 = RootObjectTemplate with {
 			SomeEncapsulatedId = SomeEncapsulatedId.CreateFromGuid(o1.SomeEncapsulatedId),
-			Values = o1.Values.Select(_ => PositiveInteger.CreateFromInteger(_)),
-			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => _.Value.Select(ni => NegativeInteger.CreateFromInteger(ni))),
+			Values = Values<PositiveInteger>.SelectFrom(o1.Values, _ => PositiveInteger.CreateFromInteger(_)),
+			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => Values<NegativeInteger>.SelectFrom(_.Value, ni => NegativeInteger.CreateFromInteger(ni))),
 			ComplexObjectWithPositiveIntegers = new SomeObjectContainingPositiveIntegerProperties(
 				PositiveInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.PositiveInteger),
 				NegativeInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.NegativeInteger-1000)
@@ -571,8 +576,8 @@ public class Tests
 		var o1 = RootObjectTemplate;
 		var o2 = RootObjectTemplate with {
 			SomeEncapsulatedId = SomeEncapsulatedId.CreateFromGuid(o1.SomeEncapsulatedId),
-			Values = o1.Values.Select(_ => PositiveInteger.CreateFromInteger(_)),
-			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => _.Value.Select(ni => NegativeInteger.CreateFromInteger(ni))),
+			Values = Values<PositiveInteger>.SelectFrom(o1.Values, _ => PositiveInteger.CreateFromInteger(_)),
+			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => Values<NegativeInteger>.SelectFrom(_.Value, ni => NegativeInteger.CreateFromInteger(ni))),
 			ComplexObjectWithPositiveIntegers = new SomeObjectContainingPositiveIntegerProperties(
 				PositiveInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.PositiveInteger),
 				NegativeInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.NegativeInteger)
@@ -611,17 +616,18 @@ public class Tests
 		// Arrange
 		var o1 = RootObjectTemplate;
 		var o2 = RootObjectTemplate with {
-			Values = o1.Values.Select(_ => PositiveInteger.CreateFromInteger(_)),
+			Values = Values<PositiveInteger>.SelectFrom(o1.Values, _ => PositiveInteger.CreateFromInteger(_)),
 		};
-		var configThatIsScalableButDoesNotWorkWhenThereAreCollectionsInvolved = (EquivalencyAssertionOptions<RootObject> options) => options.ComparingRecordsByValue();
+		var configThatIsScalableAndWorksWithRecordCollections = (EquivalencyAssertionOptions<RootObject> options) => options.ComparingRecordsByValue();
 
 		// Act & Assert
-		Assert.That(
-			() => { o2.Should().BeEquivalentTo(o1, configThatIsScalableButDoesNotWorkWhenThereAreCollectionsInvolved); },
-			Throws.Exception
-				.With.Message.Contain("Expected o2 to be RootObject")
-				.With.Message.Contain("but found RootObject")
-		);
+		o2.Should().BeEquivalentTo(o1, configThatIsScalableAndWorksWithRecordCollections);
+		//Assert.That(
+		//	() => { o2.Should().BeEquivalentTo(o1, configThatIsScalableButDoesNotWorkWhenThereAreCollectionsInvolved); },
+		//	Throws.Exception
+		//		.With.Message.Contain("Expected o2 to be RootObject")
+		//		.With.Message.Contain("but found RootObject")
+		//);
 	}
 
 	public void FailstoFindEquivalenceBetweenRootObjects_When_ComparingRecordsByValue_And_Dictionary_Does_Not_Reference_The_Same_Thing_Despite_Having_Same_Values_Inside()
@@ -629,7 +635,7 @@ public class Tests
 		// Arrange
 		var o1 = RootObjectTemplate;
 		var o2 = RootObjectTemplate with {
-			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => _.Value.Select(ni => NegativeInteger.CreateFromInteger(ni))),
+			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => Values<NegativeInteger>.SelectFrom(_.Value, ni => NegativeInteger.CreateFromInteger(ni))),
 		};
 		var configThatIsScalableButDoesNotWorkWhenThereAreCollectionsInvolved = (EquivalencyAssertionOptions<RootObject> options) => options.ComparingRecordsByValue();
 
