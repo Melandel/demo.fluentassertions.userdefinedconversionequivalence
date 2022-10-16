@@ -7,7 +7,7 @@ public class Tests
 	static readonly RootObject RootObjectTemplate = new RootObject(
 		SomeEncapsulatedId.CreateUnique(),
 		new[] { PositiveInteger.CreateFromInteger(1), PositiveInteger.CreateFromInteger(2) },
-		new Dictionary<SomeEnum, NegativeInteger[]>
+		new Dictionary<SomeEnum, IEnumerable<NegativeInteger>>
 		{
 			{ SomeEnum.Value,        new[] { NegativeInteger.CreateFromInteger(-1), NegativeInteger.CreateFromInteger(-2) } },
 			{ SomeEnum.AnotherValue, new[] { NegativeInteger.CreateFromInteger(-3), NegativeInteger.CreateFromInteger(-4) } },
@@ -278,5 +278,56 @@ public class Tests
 		o2.Should().BeEquivalentTo(o1, options => options
 			.ComparingByValue<SomeEncapsulatedId>()
 			.ComparingByValue<PositiveInteger>());
+	}
+
+	[Test]
+	public void FailsToFindDifferenceBetweenRootObjects_When_Dictionary_Has_Different_NegativeInteger_Values()
+	{
+		// Arrange
+		var o1 = RootObjectTemplate;
+		var o2 = RootObjectTemplate with {
+			SomeEncapsulatedId = SomeEncapsulatedId.CreateFromGuid(o1.SomeEncapsulatedId),
+			Values = o1.Values.Select(_ => PositiveInteger.CreateFromInteger(_)),
+			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => _.Value.Select(ni => NegativeInteger.CreateFromInteger(ni+1)))
+		};
+
+		// Act & Assert
+		o2.Should().BeEquivalentTo(o1, options => options
+			.ComparingByValue<SomeEncapsulatedId>()
+			.ComparingByValue<PositiveInteger>());
+	}
+
+	public void FindsDifferenceBetweenRootObjects_When_ComparingNegativeIntegerByValue_And_Dictionary_Has_Different_NegativeInteger_Values()
+	{
+		// Arrange
+		var o1 = RootObjectTemplate;
+		var o2 = RootObjectTemplate with {
+			SomeEncapsulatedId = SomeEncapsulatedId.CreateFromGuid(o1.SomeEncapsulatedId),
+			Values = o1.Values.Select(_ => PositiveInteger.CreateFromInteger(_)),
+			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => _.Value.Select(ni => NegativeInteger.CreateFromInteger(ni+1)))
+		};
+
+		// Act & Assert
+		o2.Should().BeEquivalentTo(o1, options => options
+			.ComparingByValue<SomeEncapsulatedId>()
+			.ComparingByValue<PositiveInteger>()
+			.ComparingByValue<NegativeInteger>());
+	}
+
+	public void FindsEquivalenceBetweenRootObjects_When_ComparingNegativeIntegerByValue_And_Dictionary_Has_Different_NegativeInteger_Values()
+	{
+		// Arrange
+		var o1 = RootObjectTemplate;
+		var o2 = RootObjectTemplate with {
+			SomeEncapsulatedId = SomeEncapsulatedId.CreateFromGuid(o1.SomeEncapsulatedId),
+			Values = o1.Values.Select(_ => PositiveInteger.CreateFromInteger(_)),
+			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => _.Value.Select(ni => NegativeInteger.CreateFromInteger(ni)))
+		};
+
+		// Act & Assert
+		o2.Should().BeEquivalentTo(o1, options => options
+			.ComparingByValue<SomeEncapsulatedId>()
+			.ComparingByValue<PositiveInteger>()
+			.ComparingByValue<NegativeInteger>());
 	}
 }
