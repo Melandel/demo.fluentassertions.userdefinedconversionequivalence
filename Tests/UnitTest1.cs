@@ -76,14 +76,16 @@ public class Tests
 		_output2.Should().BeEquivalentTo(_output1);
 	}
 
+	// Fails
 	[Test]
 	public void FaWithOptions_ComparingByMember_Should_FindDifference_From_DifferentGuid()
 	{
 		_output2.Should().NotBeEquivalentTo(_output1, options => options.ComparingByMembers<SomeEncapsulatedId>());
 	}
 
+	// Fails
 	[Test]
-	public void FaWithOptions_ComparingByMember_Should_FindDifference_When_Applied_On_SomeEncapsulatedId()
+	public void FaWithOptions_ComparingByMember_Should_FindDifference_When_Applied_On_SomeEncapsulatedId_Only()
 	{
 		var someEncapsulatedId1 = _output1.SomeEncapsulatedId;
 		var someEncapsulatedId2 = _output2.SomeEncapsulatedId;
