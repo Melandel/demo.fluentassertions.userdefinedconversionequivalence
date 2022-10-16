@@ -653,6 +653,7 @@ public class FluentAssertionsFactually
 		//);
 	}
 
+	[Test]
 	public void FailstoFindEquivalenceBetweenRootObjects_When_ComparingRecordsByValue_And_Dictionary_Does_Not_Reference_The_Same_Thing_Despite_Having_Same_Values_Inside()
 	{
 		// Arrange
@@ -663,14 +664,15 @@ public class FluentAssertionsFactually
 				kvp => kvp.Key,
 				kvp => Values<NegativeInteger>.From(kvp.Value, ni => NegativeInteger.CreateFromInteger(ni))),
 		};
-		var configThatIsScalableButDoesNotWorkWhenThereAreCollectionsInvolved = (EquivalencyAssertionOptions<RootObject> options) => options.ComparingRecordsByValue();
+		var configThatIsScalableAndWorksWithRecordCollections = (EquivalencyAssertionOptions<RootObject> options) => options.ComparingRecordsByValue();
 
 		// Act & Assert
-		Assert.That(
-			() => { o2.Should().BeEquivalentTo(o1, configThatIsScalableButDoesNotWorkWhenThereAreCollectionsInvolved); },
-			Throws.Exception
-				.With.Message.Contain("Expected o2 to be RootObject")
-				.With.Message.Contain("but found RootObject")
-		);
+		o2.Should().BeEquivalentTo(o1, configThatIsScalableAndWorksWithRecordCollections);
+		//Assert.That(
+		//	() => { o2.Should().BeEquivalentTo(o1, configThatIsScalableButDoesNotWorkWhenThereAreCollectionsInvolved); },
+		//	Throws.Exception
+		//		.With.Message.Contain("Expected o2 to be RootObject")
+		//		.With.Message.Contain("but found RootObject")
+		//);
 	}
 }
