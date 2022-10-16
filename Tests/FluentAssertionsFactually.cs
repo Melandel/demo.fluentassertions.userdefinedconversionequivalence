@@ -72,7 +72,7 @@ public class Tests
 			o2.Should().NotBeEquivalentTo(
 				o1,
 				options => options.ComparingByMembers<SomeEncapsulatedId>()
-		);
+			);
 		};
 
 		// Act & Assert
