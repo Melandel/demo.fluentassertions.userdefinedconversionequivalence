@@ -3,16 +3,15 @@ using FluentAssertions.Equivalency;
 
 namespace Tests;
 
-public class Tests
+public class FluentAssertionsFactually
 {
 	static readonly RootObject RootObjectTemplate = new RootObject(
 		SomeEncapsulatedId.CreateUnique(),
 		Values<PositiveInteger>.Gather(PositiveInteger.CreateFromInteger(1), PositiveInteger.CreateFromInteger(2)),
-		new Dictionary<SomeEnum, Values<NegativeInteger>>
-		{
-			{ SomeEnum.Value,        Values<NegativeInteger>.Gather(NegativeInteger.CreateFromInteger(-1), NegativeInteger.CreateFromInteger(-2)) },
-			{ SomeEnum.AnotherValue, Values<NegativeInteger>.Gather(NegativeInteger.CreateFromInteger(-3), NegativeInteger.CreateFromInteger(-4)) },
-		},
+		Mapping<SomeEnum, Values<NegativeInteger>>.Gather(
+			KeyValuePair.Create(SomeEnum.Value,        Values<NegativeInteger>.Gather(NegativeInteger.CreateFromInteger(-1), NegativeInteger.CreateFromInteger(-2))),
+			KeyValuePair.Create(SomeEnum.AnotherValue, Values<NegativeInteger>.Gather(NegativeInteger.CreateFromInteger(-3), NegativeInteger.CreateFromInteger(-4)))
+		),
 		new SomeObjectContainingPositiveIntegerProperties(
 			PositiveInteger.CreateFromInteger(3),
 			NegativeInteger.CreateFromInteger(-5)
@@ -209,7 +208,7 @@ public class Tests
 	{
 		// Arrange
 		var o1 = RootObjectTemplate;
-		var o2 = RootObjectTemplate with { Values = Values<PositiveInteger>.SelectFrom(o1.Values, _ => PositiveInteger.CreateFromInteger(_)) };
+		var o2 = RootObjectTemplate with { Values = Values<PositiveInteger>.From(o1.Values, _ => PositiveInteger.CreateFromInteger(_)) };
 		var configThatIsScalableAndWorksWithRecordCollections = (EquivalencyAssertionOptions<RootObject> options) => options.ComparingRecordsByValue();
 
 		// Act & Assert
@@ -245,7 +244,7 @@ public class Tests
 	{
 		// Arrange
 		var o1 = RootObjectTemplate;
-		var o2 = RootObjectTemplate with { Values = Values<PositiveInteger>.SelectFrom(o1.Values, _ => PositiveInteger.CreateFromInteger(_)) };
+		var o2 = RootObjectTemplate with { Values = Values<PositiveInteger>.From(o1.Values, _ => PositiveInteger.CreateFromInteger(_)) };
 
 		// Act & Assert
 		o2.Should().BeEquivalentTo(o1, options => options.ComparingByValue<PositiveInteger>());
@@ -258,7 +257,7 @@ public class Tests
 		// Arrange
 		var o1 = RootObjectTemplate;
 		var o2 = RootObjectTemplate with {
-			Values = Values<PositiveInteger>.SelectFrom(o1.Values, _ => PositiveInteger.CreateFromInteger(_))
+			Values = Values<PositiveInteger>.From(o1.Values, _ => PositiveInteger.CreateFromInteger(_))
 		};
 
 		// Act & Assert
@@ -277,7 +276,7 @@ public class Tests
 		var o1 = RootObjectTemplate;
 		var o2 = RootObjectTemplate with {
 			SomeEncapsulatedId = SomeEncapsulatedId.CreateFromGuid(o1.SomeEncapsulatedId),
-			Values = Values<PositiveInteger>.SelectFrom(o1.Values, _ => PositiveInteger.CreateFromInteger(_))
+			Values = Values<PositiveInteger>.From(o1.Values, _ => PositiveInteger.CreateFromInteger(_))
 		};
 
 		// Act & Assert
@@ -293,8 +292,8 @@ public class Tests
 		var o1 = RootObjectTemplate;
 		var o2 = RootObjectTemplate with {
 			SomeEncapsulatedId = SomeEncapsulatedId.CreateFromGuid(o1.SomeEncapsulatedId),
-			Values = Values<PositiveInteger>.SelectFrom(o1.Values, _ => PositiveInteger.CreateFromInteger(_)),
-			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => Values<NegativeInteger>.SelectFrom(_.Value, ni => NegativeInteger.CreateFromInteger(ni+1)))
+			Values = Values<PositiveInteger>.From(o1.Values, _ => PositiveInteger.CreateFromInteger(_)),
+			ExtraValuesByType = Mapping<SomeEnum, Values<NegativeInteger>>.From(o1.ExtraValuesByType)
 		};
 		var config = (EquivalencyAssertionOptions<RootObject> options) => options
 			.ComparingByValue<SomeEncapsulatedId>()
@@ -316,8 +315,11 @@ public class Tests
 		var o1 = RootObjectTemplate;
 		var o2 = RootObjectTemplate with {
 			SomeEncapsulatedId = SomeEncapsulatedId.CreateFromGuid(o1.SomeEncapsulatedId),
-			Values = Values<PositiveInteger>.SelectFrom(o1.Values, _ => PositiveInteger.CreateFromInteger(_)),
-			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => Values<NegativeInteger>.SelectFrom(_.Value, ni => NegativeInteger.CreateFromInteger(ni+1)))
+			Values = Values<PositiveInteger>.From(o1.Values, _ => PositiveInteger.CreateFromInteger(_)),
+			ExtraValuesByType = Mapping<SomeEnum, Values<NegativeInteger>>.From(
+				o1.ExtraValuesByType,
+				kvp => kvp.Key,
+				kvp => Values<NegativeInteger>.From(kvp.Value, ni => NegativeInteger.CreateFromInteger(ni+1)))
 		};
 
 		// Act & Assert
@@ -334,8 +336,11 @@ public class Tests
 		var o1 = RootObjectTemplate;
 		var o2 = RootObjectTemplate with {
 			SomeEncapsulatedId = SomeEncapsulatedId.CreateFromGuid(o1.SomeEncapsulatedId),
-			Values = Values<PositiveInteger>.SelectFrom(o1.Values, _ => PositiveInteger.CreateFromInteger(_)),
-			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => Values<NegativeInteger>.SelectFrom(_.Value, ni => NegativeInteger.CreateFromInteger(ni)))
+			Values = Values<PositiveInteger>.From(o1.Values, _ => PositiveInteger.CreateFromInteger(_)),
+			ExtraValuesByType = Mapping<SomeEnum, Values<NegativeInteger>>.From(
+				o1.ExtraValuesByType,
+				kvp => kvp.Key,
+				kvp => Values<NegativeInteger>.From(kvp.Value, ni => NegativeInteger.CreateFromInteger(ni)))
 		};
 
 		// Act & Assert
@@ -461,8 +466,11 @@ public class Tests
 		var o1 = RootObjectTemplate;
 		var o2 = RootObjectTemplate with {
 			SomeEncapsulatedId = SomeEncapsulatedId.CreateUnique(),
-			Values = Values<PositiveInteger>.SelectFrom(o1.Values, _ => PositiveInteger.CreateFromInteger(_)),
-			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => Values<NegativeInteger>.SelectFrom(_.Value, ni => NegativeInteger.CreateFromInteger(ni))),
+			Values = Values<PositiveInteger>.From(o1.Values, _ => PositiveInteger.CreateFromInteger(_)),
+			ExtraValuesByType = Mapping<SomeEnum, Values<NegativeInteger>>.From(
+				o1.ExtraValuesByType,
+				kvp => kvp.Key,
+				kvp => Values<NegativeInteger>.From(kvp.Value, ni => NegativeInteger.CreateFromInteger(ni))),
 			ComplexObjectWithPositiveIntegers = new SomeObjectContainingPositiveIntegerProperties(
 				PositiveInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.PositiveInteger),
 				NegativeInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.NegativeInteger)
@@ -484,8 +492,11 @@ public class Tests
 		var o1 = RootObjectTemplate;
 		var o2 = RootObjectTemplate with {
 			SomeEncapsulatedId = SomeEncapsulatedId.CreateFromGuid(o1.SomeEncapsulatedId),
-			Values = Values<PositiveInteger>.SelectFrom(o1.Values, _ => PositiveInteger.CreateFromInteger(_+1000)),
-			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => Values<NegativeInteger>.SelectFrom(_.Value, ni => NegativeInteger.CreateFromInteger(ni))),
+			Values = Values<PositiveInteger>.From(o1.Values, _ => PositiveInteger.CreateFromInteger(_+1000)),
+			ExtraValuesByType = Mapping<SomeEnum, Values<NegativeInteger>>.From(
+				o1.ExtraValuesByType,
+				kvp => kvp.Key,
+				kvp => Values<NegativeInteger>.From(kvp.Value, ni => NegativeInteger.CreateFromInteger(ni))),
 			ComplexObjectWithPositiveIntegers = new SomeObjectContainingPositiveIntegerProperties(
 				PositiveInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.PositiveInteger),
 				NegativeInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.NegativeInteger)
@@ -507,8 +518,11 @@ public class Tests
 		var o1 = RootObjectTemplate;
 		var o2 = RootObjectTemplate with {
 			SomeEncapsulatedId = SomeEncapsulatedId.CreateFromGuid(o1.SomeEncapsulatedId),
-			Values = Values<PositiveInteger>.SelectFrom(o1.Values, _ => PositiveInteger.CreateFromInteger(_)),
-			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => Values<NegativeInteger>.SelectFrom(_.Value, ni => NegativeInteger.CreateFromInteger(ni-1000))),
+			Values = Values<PositiveInteger>.From(o1.Values, _ => PositiveInteger.CreateFromInteger(_)),
+			ExtraValuesByType = Mapping<SomeEnum, Values<NegativeInteger>>.From(
+				o1.ExtraValuesByType,
+				kvp => kvp.Key,
+				kvp => Values<NegativeInteger>.From(kvp.Value, ni => NegativeInteger.CreateFromInteger(ni-1000))),
 			ComplexObjectWithPositiveIntegers = new SomeObjectContainingPositiveIntegerProperties(
 				PositiveInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.PositiveInteger),
 				NegativeInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.NegativeInteger)
@@ -530,8 +544,11 @@ public class Tests
 		var o1 = RootObjectTemplate;
 		var o2 = RootObjectTemplate with {
 			SomeEncapsulatedId = SomeEncapsulatedId.CreateFromGuid(o1.SomeEncapsulatedId),
-			Values = Values<PositiveInteger>.SelectFrom(o1.Values, _ => PositiveInteger.CreateFromInteger(_)),
-			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => Values<NegativeInteger>.SelectFrom(_.Value, ni => NegativeInteger.CreateFromInteger(ni))),
+			Values = Values<PositiveInteger>.From(o1.Values, _ => PositiveInteger.CreateFromInteger(_)),
+			ExtraValuesByType = Mapping<SomeEnum, Values<NegativeInteger>>.From(
+				o1.ExtraValuesByType,
+				kvp => kvp.Key,
+				kvp => Values<NegativeInteger>.From(kvp.Value, ni => NegativeInteger.CreateFromInteger(ni))),
 			ComplexObjectWithPositiveIntegers = new SomeObjectContainingPositiveIntegerProperties(
 				PositiveInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.PositiveInteger+1000),
 				NegativeInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.NegativeInteger)
@@ -553,8 +570,11 @@ public class Tests
 		var o1 = RootObjectTemplate;
 		var o2 = RootObjectTemplate with {
 			SomeEncapsulatedId = SomeEncapsulatedId.CreateFromGuid(o1.SomeEncapsulatedId),
-			Values = Values<PositiveInteger>.SelectFrom(o1.Values, _ => PositiveInteger.CreateFromInteger(_)),
-			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => Values<NegativeInteger>.SelectFrom(_.Value, ni => NegativeInteger.CreateFromInteger(ni))),
+			Values = Values<PositiveInteger>.From(o1.Values, _ => PositiveInteger.CreateFromInteger(_)),
+			ExtraValuesByType = Mapping<SomeEnum, Values<NegativeInteger>>.From(
+				o1.ExtraValuesByType,
+				kvp => kvp.Key,
+				kvp => Values<NegativeInteger>.From(kvp.Value, ni => NegativeInteger.CreateFromInteger(ni))),
 			ComplexObjectWithPositiveIntegers = new SomeObjectContainingPositiveIntegerProperties(
 				PositiveInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.PositiveInteger),
 				NegativeInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.NegativeInteger-1000)
@@ -576,8 +596,11 @@ public class Tests
 		var o1 = RootObjectTemplate;
 		var o2 = RootObjectTemplate with {
 			SomeEncapsulatedId = SomeEncapsulatedId.CreateFromGuid(o1.SomeEncapsulatedId),
-			Values = Values<PositiveInteger>.SelectFrom(o1.Values, _ => PositiveInteger.CreateFromInteger(_)),
-			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => Values<NegativeInteger>.SelectFrom(_.Value, ni => NegativeInteger.CreateFromInteger(ni))),
+			Values = Values<PositiveInteger>.From(o1.Values, _ => PositiveInteger.CreateFromInteger(_)),
+			ExtraValuesByType = Mapping<SomeEnum, Values<NegativeInteger>>.From(
+				o1.ExtraValuesByType,
+				kvp => kvp.Key,
+				kvp => Values<NegativeInteger>.From(kvp.Value, ni => NegativeInteger.CreateFromInteger(ni))),
 			ComplexObjectWithPositiveIntegers = new SomeObjectContainingPositiveIntegerProperties(
 				PositiveInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.PositiveInteger),
 				NegativeInteger.CreateFromInteger(o1.ComplexObjectWithPositiveIntegers.NegativeInteger)
@@ -616,7 +639,7 @@ public class Tests
 		// Arrange
 		var o1 = RootObjectTemplate;
 		var o2 = RootObjectTemplate with {
-			Values = Values<PositiveInteger>.SelectFrom(o1.Values, _ => PositiveInteger.CreateFromInteger(_)),
+			Values = Values<PositiveInteger>.From(o1.Values, _ => PositiveInteger.CreateFromInteger(_)),
 		};
 		var configThatIsScalableAndWorksWithRecordCollections = (EquivalencyAssertionOptions<RootObject> options) => options.ComparingRecordsByValue();
 
@@ -635,7 +658,10 @@ public class Tests
 		// Arrange
 		var o1 = RootObjectTemplate;
 		var o2 = RootObjectTemplate with {
-			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => Values<NegativeInteger>.SelectFrom(_.Value, ni => NegativeInteger.CreateFromInteger(ni))),
+			ExtraValuesByType = Mapping<SomeEnum, Values<NegativeInteger>>.From(
+				o1.ExtraValuesByType,
+				kvp => kvp.Key,
+				kvp => Values<NegativeInteger>.From(kvp.Value, ni => NegativeInteger.CreateFromInteger(ni))),
 		};
 		var configThatIsScalableButDoesNotWorkWhenThereAreCollectionsInvolved = (EquivalencyAssertionOptions<RootObject> options) => options.ComparingRecordsByValue();
 
