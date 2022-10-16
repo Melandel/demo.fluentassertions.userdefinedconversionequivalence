@@ -1,6 +1,6 @@
 namespace Tests;
 
-record Output(
+record RootObject(
 	SomeEncapsulatedId SomeEncapsulatedId,
 	PositiveInteger[] Values,
 	Dictionary<SomeEnum, NegativeInteger[]> ExtraValuesByType,

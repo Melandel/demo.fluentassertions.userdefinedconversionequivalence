@@ -4,9 +4,7 @@ namespace Tests;
 
 public class Tests
 {
-	Output _output1;
-	Output _output2;
-	readonly Output OutputBase = new Output(
+	static readonly RootObject RootObjectTemplate = new RootObject(
 		SomeEncapsulatedId.CreateUnique(),
 		new[] { PositiveInteger.CreateFromInteger(1), PositiveInteger.CreateFromInteger(2) },
 		new Dictionary<SomeEnum, NegativeInteger[]>
@@ -20,22 +18,19 @@ public class Tests
 		)
 	);
 
-	[SetUp]
-	public void SetUp()
-	{
-		_output1 = OutputBase;
-		_output2 = OutputBase with { SomeEncapsulatedId = SomeEncapsulatedId.CreateUnique() }; // Different SomeEncapsulatedId
-	}
-
 	[Test]
 	public void FailsToFindDifferencesBetweenOutputs_When_NoConfigurationIsGiven()
 	{
-		var whatIWishWasTrue = () => { _output2.Should().NotBeEquivalentTo(_output1); };
+		// Arrange
+		var o1 = RootObjectTemplate;
+		var o2 = RootObjectTemplate with { SomeEncapsulatedId = SomeEncapsulatedId.CreateUnique() };
+		var whatIWishWasTrue = () => { o2.Should().NotBeEquivalentTo(o1); };
 
+		// Act & Assert
 		Assert.That(
 			whatIWishWasTrue,
 			Throws.Exception
-				.With.Message.Contain("Expected _output2 not to be equivalent to Output")
+				.With.Message.Contain("Expected o2 not to be equivalent to RootObject")
 				.With.Message.Contain(", but they are.")
 		);
 	}
@@ -43,16 +38,18 @@ public class Tests
 	[Test]
 	public void FailsToFindDifferencesBetweenEncapsulatedIDs_When_Comparing_SomeEncapsulatedId_ByMember()
 	{
-
-		var someEncapsulatedId1 = _output1.SomeEncapsulatedId;
-		var someEncapsulatedId2 = _output2.SomeEncapsulatedId;
-
+		// Arrange
+		var o1 = RootObjectTemplate;
+		var o2 = RootObjectTemplate with { SomeEncapsulatedId = SomeEncapsulatedId.CreateUnique() };
+		var id1 = o1.SomeEncapsulatedId;
+		var id2 = o2.SomeEncapsulatedId;
 		var whatDennisDoomenSuggested = () => { // https://github.com/fluentassertions/fluentassertions/issues/2016#issuecomment-1279928376
-			someEncapsulatedId2.Should().NotBeEquivalentTo(
-				someEncapsulatedId1,
+			id2.Should().NotBeEquivalentTo(
+				id1,
 				options => options.ComparingByMembers<SomeEncapsulatedId>()
 			); };
 
+		// Act & Assert
 		Assert.That(
 			whatDennisDoomenSuggested,
 			Throws.TypeOf<InvalidOperationException>()
@@ -63,16 +60,21 @@ public class Tests
 	[Test]
 	public void FailsToFindDifferencesBetweenOutputs_When_Comparing_SomeEncapsulatedId_ByMember()
 	{
+		// Arrange
+		var o1 = RootObjectTemplate;
+		var o2 = RootObjectTemplate with { SomeEncapsulatedId = SomeEncapsulatedId.CreateUnique() };
 		var whatIWishWasTrue = () => {
-			_output2.Should().NotBeEquivalentTo(
-				_output1,
+			o2.Should().NotBeEquivalentTo(
+				o1,
 				options => options.ComparingByMembers<SomeEncapsulatedId>()
 			);
 		};
+
+		// Act & Assert
 		Assert.That(
 			whatIWishWasTrue,
 			Throws.Exception
-				.With.Message.Contain("Expected _output2 not to be equivalent to Output")
+				.With.Message.Contain("Expected o2 not to be equivalent to RootObject")
 				.With.Message.Contain(", but they are.")
 		);
 	}
