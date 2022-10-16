@@ -1,4 +1,5 @@
 using FluentAssertions;
+using FluentAssertions.Equivalency;
 
 namespace Tests;
 
@@ -290,13 +291,20 @@ public class Tests
 			Values = o1.Values.Select(_ => PositiveInteger.CreateFromInteger(_)),
 			ExtraValuesByType = o1.ExtraValuesByType.ToDictionary(_ => _.Key, _ => _.Value.Select(ni => NegativeInteger.CreateFromInteger(ni+1)))
 		};
+		var config = (EquivalencyAssertionOptions<RootObject> options) => options
+			.ComparingByValue<SomeEncapsulatedId>()
+			.ComparingByValue<PositiveInteger>();
 
 		// Act & Assert
-		o2.Should().BeEquivalentTo(o1, options => options
-			.ComparingByValue<SomeEncapsulatedId>()
-			.ComparingByValue<PositiveInteger>());
+		Assert.That(
+			() => { o2.Should().NotBeEquivalentTo(o1, config); },
+			Throws.Exception
+				.With.Message.Contain("Expected o2 not to be equivalent to RootObject")
+				.With.Message.Contain(", but they are.")
+		);
 	}
 
+	[Test]
 	public void FindsDifferenceBetweenRootObjects_When_ComparingNegativeIntegerByValue_And_Dictionary_Has_Different_NegativeInteger_Values()
 	{
 		// Arrange
@@ -308,12 +316,13 @@ public class Tests
 		};
 
 		// Act & Assert
-		o2.Should().BeEquivalentTo(o1, options => options
+		o2.Should().NotBeEquivalentTo(o1, options => options
 			.ComparingByValue<SomeEncapsulatedId>()
 			.ComparingByValue<PositiveInteger>()
 			.ComparingByValue<NegativeInteger>());
 	}
 
+	[Test]
 	public void FindsEquivalenceBetweenRootObjects_When_ComparingNegativeIntegerByValue_And_Dictionary_Has_Different_NegativeInteger_Values()
 	{
 		// Arrange
