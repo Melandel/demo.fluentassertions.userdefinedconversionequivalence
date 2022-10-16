@@ -234,4 +234,26 @@ public class Tests
 				.With.Message.Contains("but found RootObject")
 		);
 	}
+
+	[Test]
+	public void FindsEquivalenceBetweenRootObjects_When_Comparing_PositiveIntegersInsideArray_ByValue_And_Collection_Property_Has_Same_Values_But_In_Different_Array()
+	{
+		// Arrange
+		var o1 = RootObjectTemplate;
+		var o2 = RootObjectTemplate with { Values = new[] { o1.Values[0], o1.Values[1] } };
+
+		// Act & Assert
+		o2.Should().BeEquivalentTo(o1, options => options.ComparingByValue<PositiveInteger>());
+	}
+
+	[Test]
+	public void FindsEquivalenceBetweenRootObjects_When_Comparing_PositiveIntegersInsideArray_ByValue_And_Collection_Property_Has_Same_Values_But_In_Different_Array_And_Different_Instances()
+	{
+		// Arrange
+		var o1 = RootObjectTemplate;
+		var o2 = RootObjectTemplate with { Values = new[] { PositiveInteger.CreateFromInteger(1), PositiveInteger.CreateFromInteger(2) } };
+
+		// Act & Assert
+		o2.Should().BeEquivalentTo(o1, options => options.ComparingByValue<PositiveInteger>());
+	}
 }
