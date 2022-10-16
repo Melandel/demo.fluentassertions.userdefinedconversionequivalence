@@ -47,7 +47,7 @@ public class Tests
 		var someEncapsulatedId1 = _output1.SomeEncapsulatedId;
 		var someEncapsulatedId2 = _output2.SomeEncapsulatedId;
 
-		var whatDennisDoomenSuggested = () => { // // https://github.com/fluentassertions/fluentassertions/issues/2016#issuecomment-1279928376
+		var whatDennisDoomenSuggested = () => { // https://github.com/fluentassertions/fluentassertions/issues/2016#issuecomment-1279928376
 			someEncapsulatedId2.Should().NotBeEquivalentTo(
 				someEncapsulatedId1,
 				options => options.ComparingByMembers<SomeEncapsulatedId>()
